@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Manage accounts · Team 1 Bookstore{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap gap-3 justify-content-between align-items-center mb-4"><div><p class="eyebrow">Admin area</p><h1 class="h2">Manage accounts</h1></div><a class="btn btn-primary" href="{{ url_for('admin.create_account') }}">Create account</a></div>
+<p>Choose a role and status, then save. At least one Admin must stay active.</p>
+<div class="row g-3">
+{% for user in users %}<div class="col-12 col-md-6 col-xl-4"><section class="card h-100 p-4">
+<h2 class="h5 text-break">{{ user['name'] }}</h2><p class="text-break text-secondary">{{ user['email'] }}</p>
+<p><span class="badge {{ 'text-bg-secondary' if user['is_locked'] else 'text-bg-success' }}">{{ 'Locked' if user['is_locked'] else 'Active' }}</span> <span class="badge text-bg-light">{{ user['role'] }}</span></p>
+<form method="post" action="{{ url_for('admin.update_account', user_id=user['id']) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label class="form-label" for="role-{{ user['id'] }}">Role</label><select class="form-select mb-3" name="role" id="role-{{ user['id'] }}" required>{% for role in ['Customer', 'Admin'] %}<option {{ 'selected' if user['role'] == role }}>{{ role }}</option>{% endfor %}</select>
+<label class="form-label" for="state-{{ user['id'] }}">Status</label><select class="form-select mb-3" name="state" id="state-{{ user['id'] }}" required><option value="active" {{ 'selected' if not user['is_locked'] }}>Active</option><option value="locked" {{ 'selected' if user['is_locked'] }}>Locked</option></select>
+<button class="btn btn-outline-dark">Save changes</button>
+</form></section></div>{% endfor %}
+</div>{% endblock %}

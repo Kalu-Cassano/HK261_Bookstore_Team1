@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero rounded-4 p-4 p-md-5">
+  <p class="eyebrow">A new chapter starts here</p>
+  <h1 class="display-4">Welcome to<br>Team 1 Bookstore.</h1>
+  <p class="lead mt-3">A simple place for people who love books.</p>
+  {% if g.user %}<p>Welcome back, {{ g.user['name'] }}. Your next chapter starts here.</p>
+  {% else %}<p>Create your account and get ready for our next chapter.</p>{% endif %}
+  {% if g.user %}<a class="btn btn-primary mt-2" href="{{ url_for('auth.account') }}">Open my account</a>
+  {% else %}<a class="btn btn-primary mt-2" href="{{ url_for('auth.register') }}">Join our bookstore</a>{% endif %}
+</section>
+<div class="row g-4 mt-3">
+  <div class="col-md-6"><section class="card h-100 p-4"><h2 class="h4">Your own account</h2><p class="mb-0">{% if g.user %}View your account details in My account.{% else %}Sign in to view your account details.{% endif %}</p></section></div>
+  <div class="col-md-6"><section class="card h-100 p-4"><h2 class="h4">Coming later</h2><p class="mb-0">Our book catalogue is not open yet.</p></section></div>
+</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}Create account · Admin{% endblock %}
+{% block content %}<section class="card p-4 form-card mx-auto"><h1 class="h2">Create an account</h1><p class="text-secondary">Choose the account role with care.</p>
+<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% include '_account_fields.html' %}
+<label class="form-label" for="role">Role</label><select class="form-select mb-3" id="role" name="role" required>{% for role in ['Customer', 'Admin'] %}<option {{ 'selected' if request.form.get('role') == role }}>{{ role }}</option>{% endfor %}</select>
+<button class="btn btn-primary w-100">Create account</button></form><a class="mt-3" href="{{ url_for('admin.accounts') }}">Back to accounts</a></section>{% endblock %}

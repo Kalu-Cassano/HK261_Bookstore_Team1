@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}My account · Team 1 Bookstore{% endblock %}
+{% block content %}<section class="card p-4 form-card mx-auto">
+<p class="eyebrow">My account</p><h1 class="h2">Hello, {{ g.user['name'] }}.</h1>
+<dl class="mt-3"><dt>Email</dt><dd class="text-break">{{ g.user['email'] }}</dd><dt>Role</dt><dd>{{ g.user['role'] }}</dd><dt>Account status</dt><dd>Active</dd></dl>
+{% if g.user['role'] == 'Admin' %}<a class="btn btn-primary" href="{{ url_for('admin.accounts') }}">Manage accounts</a>{% endif %}
+</section>{% endblock %}
