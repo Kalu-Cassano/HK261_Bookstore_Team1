@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Manage books</h1><div class="d-flex flex-wrap gap-3 my-4"><a class="btn btn-primary" href="{{ url_for('catalog.edit_book') }}">Add book</a><a class="btn btn-outline-dark" href="{{ url_for('catalog.metadata', kind='authors') }}">Authors</a><a class="btn btn-outline-dark" href="{{ url_for('catalog.metadata', kind='genres') }}">Genres</a></div>
+<p>Hidden books stay in the database and are unavailable to visitors.</p>
+<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Title / author</th><th>Genre</th><th>Price (VND)</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+{% for book in books %}<tr><td class="book-title">{{ book.title }}<br><small>{{ book.author }}</small></td><td>{{ book.genre }}</td><td>{{ book.price_cents|money }}</td><td>{{ book.stock }}</td><td>{{ 'Hidden' if book.is_hidden else 'Visible' }}</td><td><div class="d-flex gap-2 flex-wrap"><a class="btn btn-sm btn-outline-dark" href="{{ url_for('catalog.edit_book', book_id=book.id) }}">Edit</a><form method="post" action="{{ url_for('catalog.visibility', book_id=book.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="is_hidden" value="{{ 0 if book.is_hidden else 1 }}"><button class="btn btn-sm btn-outline-danger">{{ 'Show' if book.is_hidden else 'Hide' }}</button></form></div></td></tr>
+{% else %}<tr><td colspan="6">No books yet. Add a book or run seed-books.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

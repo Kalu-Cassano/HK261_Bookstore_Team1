@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Manage {{ kind }}</h1><a href="{{ url_for('catalog.manage_books') }}">Back to book management</a>
+<p class="mt-3">Add, rename or delete entries. Renaming updates their display on all linked books. An entry that is still used by a book cannot be deleted.</p>
+<form method="post" class="card p-3 mb-4"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label class="form-label" for="new-name">New {{ 'author' if kind == 'authors' else 'genre' }}</label><div class="d-flex gap-2"><input class="form-control" id="new-name" name="name" required minlength="2" maxlength="120"><button class="btn btn-primary">Add</button></div></form>
+{% for entry in entries %}<form method="post" class="card p-3 mb-3"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ entry.id }}"><label class="form-label" for="name-{{ entry.id }}">Rename {{ entry.name }}</label><div class="d-flex gap-2"><input class="form-control" id="name-{{ entry.id }}" name="name" required minlength="2" maxlength="120" value="{{ entry.name }}"><button class="btn btn-outline-dark">Save</button></div></form><form method="post" action="{{ url_for('catalog.delete_metadata', kind=kind, row_id=entry.id) }}" class="mb-4 text-end"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-danger">Delete {{ entry.name }}</button></form>{% endfor %}
+{% endblock %}

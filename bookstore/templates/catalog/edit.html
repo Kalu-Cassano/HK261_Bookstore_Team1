@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ 'Edit book' if editing else 'Add book' }}</h1>
+<p><a href="{{ url_for('catalog.manage_books') }}">Back to book management</a></p>
+{% if not authors or not genres %}<div class="alert alert-warning">Create an <a href="{{ url_for('catalog.metadata', kind='authors') }}">author</a> and a <a href="{{ url_for('catalog.metadata', kind='genres') }}">genre</a> before saving a book.</div>{% endif %}
+<form method="post" class="card p-4 mx-auto" style="max-width:800px">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label class="form-label" for="isbn">ISBN-13 (required)</label><input class="form-control" id="isbn" name="isbn" type="text" inputmode="numeric" pattern="[0-9]{13}" minlength="13" maxlength="13" required aria-describedby="isbn-help" value="{{ data.get('isbn', '') }}">
+  <p id="isbn-help" class="form-text">Enter exactly 13 digits. ISBN must be unique, including hidden books. Codes starting with 000 are always marked as demo.</p>
+  <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="isbn_is_demo" name="isbn_is_demo" value="1" {% if data.get('isbn_is_demo') %}checked{% endif %}><label class="form-check-label" for="isbn_is_demo">Demo code — not a verified edition ISBN</label></div>
+  <label class="form-label" for="title">Title</label><input class="form-control mb-3" id="title" name="title" required maxlength="200" value="{{ data.get('title', '') }}">
+  <div class="row g-3 mb-3">{% for field, label, entries in [('author_id', 'Author', authors), ('genre_id', 'Genre', genres)] %}<div class="col-md-6"><label class="form-label" for="{{ field }}">{{ label }}</label><select class="form-select" id="{{ field }}" name="{{ field }}" required><option value="">Choose {{ label|lower }}</option>{% for entry in entries %}<option value="{{ entry.id }}" {% if data.get(field)|string == entry.id|string %}selected{% endif %}>{{ entry.name }}</option>{% endfor %}</select></div>{% endfor %}</div>
+  <div class="row g-3 mb-3"><div class="col-sm-6"><label class="form-label" for="price">Price (VND)</label><input class="form-control" id="price" name="price" type="number" min="0.01" max="999999999.99" step="0.01" required value="{{ data.get('price', '') }}"></div><div class="col-sm-6"><label class="form-label" for="stock">Stock</label><input class="form-control" id="stock" name="stock" type="number" min="0" max="2147483647" step="1" required value="{{ data.get('stock', '0') }}"></div></div>
+  <label class="form-label" for="description">Description</label><textarea class="form-control mb-3" id="description" name="description" maxlength="10000" rows="6">{{ data.get('description', '') }}</textarea>
+  <label class="form-label" for="cover_url">Cover image URL (HTTPS)</label><input class="form-control" type="url" pattern="https://.*" maxlength="1000" id="cover_url" name="cover_url" value="{{ data.get('cover_url', '') }}"><p class="form-text">Leave empty to use the bundled cover. Use an image you have permission to display.</p>
+  <button class="btn btn-primary align-self-start" {% if not authors or not genres %}disabled{% endif %}>Save book</button>
+</form>
+{% endblock %}

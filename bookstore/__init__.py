@@ -24,11 +24,21 @@ def create_app(test_config=None):
     if not app.config['SECRET_KEY']:
         raise RuntimeError('Set SECRET_KEY in your environment or .env file. See README.md.')
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
-    from . import db, auth, admin
+    from . import db, auth, admin, catalog
     db.init_app(app)
     csrf.init_app(app)
     app.register_blueprint(auth.bp)
     app.register_blueprint(admin.bp)
+    app.register_blueprint(catalog.bp)
+
+    @app.template_filter('money')
+    def money(cents):
+        # Prices remain integer hundredths of VND in SQLite; no float rounding.
+        whole, fraction = divmod(cents, 100)
+        amount = f'{whole:,}'.replace(',', '.')
+        if fraction:
+            amount += f',{fraction:02d}'
+        return f'{amount} ₫'
 
     @app.route('/')
     def home():
@@ -44,6 +54,6 @@ def create_app(test_config=None):
 
     @app.errorhandler(404)
     def not_found(error):
-        return render_template('error.html', title='Page not found', message='We could not find this page.'), 404
+        return render_template('error.html', title='Page not found', message='This page or book is unavailable. It may have been hidden. Please return to the book catalogue.'), 404
 
     return app

@@ -1,6 +1,91 @@
 ﻿# Báo cáo kiểm tra F1
 
-## Lần kiểm tra lại theo yêu cầu
+## CR-01 ISBN-13 — đã duyệt và triển khai
+
+Trạng thái phê duyệt theo xác nhận trực tiếp của người dùng trong yêu cầu triển khai CR-01. Không commit, push hoặc deploy; tiếp tục trên toàn bộ code Release 1.0 đang có tại máy, không quay về commit F1.
+
+### Kết quả kiểm thử mới nhất
+
+```text
+135 passed in 51.40s
+```
+
+Chạy toàn bộ `tests/` bằng Python trong `.venv`, `--basetemp` mới dưới `.test-tmp/`, `-p no:cacheprovider`; mã thoát 0, CSRF bật, không cảnh báo hoặc test bỏ qua. Gồm toàn bộ F1–F5, giá VND/16 sách thật và CR-01.
+
+Test ISBN bao gồm thiếu/rỗng, 12/14 ký tự, chữ, chữ số Unicode/gạch nối/khoảng trắng; trùng mã kể cả sách ẩn; sửa giữ nguyên mã của chính sách; form required/pattern; hiển thị ISBN/nhãn demo; tìm ISBN kết hợp thể loại/giá/phân trang/quay lại; ràng buộc SQLite NOT NULL/UNIQUE/CHECK (kể cả BLOB và chuỗi chứa NUL); seed lặp không đổi ISBN. Test migration dùng 52 sách cũ, xác minh backup còn schema cũ, giữ mọi cột dữ liệu cũ, tài khoản, index riêng, sequence ID và SQLite integrity; chạy migration lần hai giữ nguyên.
+
+### Nâng cấp database cục bộ thực tế
+
+- Tệp backup trước migration thành công: `instance/backups/before-cr01-4b186025246d427183f7f7dd07eb5917.sqlite3`, chỉ cục bộ và được Git bỏ qua.
+- Trước/sau: **52 sách**. Mọi cột cũ của `books`, mọi bản ghi `users`, `authors`, `genres` và sequence ID đã đối chiếu giống nhau; `.env` có SHA-256 trước/sau giống nhau. Giá vẫn lưu đơn vị 1/100 VND. `foreign_key_check` không có lỗi; `integrity_check` trả `ok`.
+- Cấp 52 mã dạng TEXT, đúng 13 chữ số, không trùng, tất cả `isbn_is_demo=1`. Chưa xác minh đủ thông tin ấn bản của 16 sách thật; **không gắn ISBN thật theo suy đoán**. Mã demo dùng prefix `000`, giao diện ghi rõ **Demo code — not a verified edition ISBN**. SQLite và server buộc mã prefix `000` phải có cờ demo.
+- Chạy lại `upgrade-db`: không đổi mã/dữ liệu. Chạy `seed-books` và `seed-real-books` mỗi lệnh hai lần: cả bốn lần đều `Inserted 0`; toàn bộ 52 bản ghi sau đó giống ngay sau migration.
+- Lần CLI đầu gặp lỗi mã hóa Windows `cp1258` khi in đường dẫn backup có tiếng Việt; lỗi xảy ra sau backup nhưng trước khi ghi schema, database cũ còn nguyên. Đã sửa thông báo in đường dẫn tương đối ASCII và thêm regression test thực thi CLI trong đường dẫn tiếng Việt với `PYTHONIOENCODING=cp1258`. Lần chạy lại thành công như trên.
+
+### HTTP thực tế và giới hạn
+
+Khởi động lại Flask tại `http://127.0.0.1:5000`, debug tắt. HTTP 200 và nội dung đúng cho tìm mã demo Bitcoin `0000000000037` kết hợp thể loại + min=max=464550, trang chi tiết hiển thị mã và nhãn demo, quay lại giữ toàn bộ tham số. Lọc max=464549 không có Bitcoin; `/books?q=000&page=2` có 12 sách. Tìm tên/tác giả vẫn hoạt động; catalogue có 52 sách; giá Bitcoin `464.550 ₫`, Demo 36 `230.000 ₫` giữ đúng định dạng.
+
+Form và quyền Admin được kiểm tra bằng Flask test client với tài khoản test trong SQLite riêng; không sửa tài khoản thật. Không thực hiện QA trực quan bằng trình duyệt mới. CR này kiểm tra đúng 13 chữ số và tính duy nhất theo yêu cầu; không xác minh checksum/ấn bản tự động. Các phần dưới đây là lịch sử trước CR-01 và không thay thế kết quả mới nhất phía trên.
+
+## Bổ sung 16 đầu sách thật và định dạng VND (lịch sử trước CR-01)
+
+- Đọc schema và xác minh `price_cents` lưu VND × 100. Thêm lệnh riêng `seed-real-books`, không sửa lệnh tạo 36 sách mẫu. Giá tham khảo theo dữ liệu người dùng cung cấp; mô tả tiếng Anh ngắn, tồn kho demo 10, bìa SVG mặc định do workspace không có bìa riêng phù hợp. Không thêm ISBN.
+- Sao lưu SQLite trước khi seed tại `instance/backups/before-real-books-868c56d971bd4d1aaf73a0b7c4b63479.sqlite3` (chỉ cục bộ, Git bỏ qua). Ban đầu 36 sách; lần seed 1 thêm 16, tổng 52; lần seed 2 thêm 0, tổng 52. Đối chiếu toàn bộ các bản ghi cũ trong `users`, `books`, `authors`, `genres` không đổi; SHA-256 `.env` trước/sau không đổi; SQLite integrity `ok`.
+- Bộ lọc `money` dùng chung hiển thị `230.000 ₫` và `464.550 ₫` trên catalogue, chi tiết và bảng Admin. Không thay đổi dữ liệu giá hay logic lọc. Nếu giá cũ có phần lẻ, giữ chính xác, ví dụ `125.000,50 ₫`, không làm tròn mất dữ liệu.
+- Chạy lại toàn bộ pytest với SQLite tạm, CSRF bật, cacheprovider tắt: **114 passed in 44.64s**, không cảnh báo/test bỏ qua. Test mới kiểm tra đủ 16 mức giá, seed lặp, giữ sách đã sửa/ẩn, bỏ qua sách nhập tay, tái sử dụng tác giả/thể loại, định dạng trên cả 3 nơi, ô nhập dạng số và biên lọc giá.
+- Khởi động lại Flask tại `127.0.0.1:5000`. HTTP thực tế xác nhận cả danh sách và chi tiết của Bookstore Demo 36 là `230.000 ₫`, Bitcoin Is for Everyone là `464.550 ₫`. Catalogue báo 52 sách; tìm Michele Cagan trả 2 sách; tìm Bitcoin kết hợp min=max=464550 có sách, max=464549 không có; ô lọc giữ giá trị `464550`.
+- Bảng Admin và ô sửa giá được kiểm tra bằng Flask test client với đăng nhập Admin trong database test riêng, không đăng nhập hoặc sửa tài khoản thật. Không thực hiện kiểm tra trực quan trình duyệt mới. Không commit/push.
+
+## Release 1.0 — F1–F5, ngày 2026-11-09
+
+Trạng thái trước khi sửa: `main` ở commit `55167a1`, working tree sạch; code cục bộ chỉ có F1. Không tìm thấy hồ sơ phê duyệt CR-01, nên ISBN giữ trạng thái chờ duyệt. Giữ Flask, SQLite, Jinja2, Bootstrap và code F1 hiện có.
+
+### Kiểm thử tự động thực tế
+
+Chạy toàn bộ `tests/` với `.venv/Scripts/python.exe`, một thư mục `--basetemp` mới trong `.test-tmp/` và `-p no:cacheprovider`, CSRF vẫn bật:
+
+```text
+104 passed in 41.55s
+```
+
+Gồm 40 test F1 cũ và 64 trường hợp mới. Test F2–F5 kiểm tra quyền GET/POST cho khách và Customer, Admin hợp lệ, CSRF thiếu/sai, tạo/sửa/ẩn/khôi phục sách, giá/tồn kho sai, tác giả/thể loại không tồn tại, URL bìa không an toàn, quản lý tác giả/thể loại, phân trang/mới nhất trước, sách ẩn/ID thiếu trả 404, tìm Unicode/tên tác giả, escape LIKE và HTML, lọc kết hợp, trang tiếp giữ bộ lọc và quay lại đúng danh sách. Kiểm tra thêm seed lặp không trùng/không ghi đè, nâng cấp database F1 cũ giữ nguyên mọi cột tài khoản, foreign keys và CHECK giá/tồn kho.
+
+Lần chạy đầu có `1 failed, 103 passed in 41.12s`: công thức kỳ vọng ID trong test phân trang viết sai. Đã sửa kỳ vọng test; ứng dụng vốn trả đúng thứ tự 36 xuống 25 ở trang đầu. Kết quả 104 đạt phía trên là lần chạy lại toàn bộ sau sửa, mã thoát 0, không cảnh báo hoặc test bỏ qua.
+
+### Database thật và bảo toàn dữ liệu
+
+- Sao lưu bằng SQLite backup API trước khi nâng cấp tại `instance/backups/pre-release1-bbcbe19356c6458c92bd9373c768d982.sqlite3`. Bản sao chỉ lưu cục bộ, được `.gitignore` bỏ qua.
+- `upgrade-db` tạo bảng/index còn thiếu. Đối chiếu toàn bộ bản ghi `users` và cấu trúc bảng trước/sau giống nhau; không tạo hay đổi tài khoản/mật khẩu thật. SHA-256 nội dung `.env` trước/sau giống nhau; không ghi đè `.env`.
+- `seed-books`: lần đầu `Inserted 36 demo books`, lần hai `Inserted 0 demo books`; database thực tế có 36 sách sau bước chuẩn bị. `PRAGMA integrity_check` trả `ok`.
+- Không xóa database, cache hoặc các thư mục test cũ. Dữ liệu phát sinh trong test/benchmark dùng SQLite riêng trong `.test-tmp/`.
+
+### Kiểm tra HTTP và giao diện
+
+Flask chạy tại `127.0.0.1:5000`, debug tắt. Kiểm tra HTTP thực tế bằng Python urllib:
+
+- `/`, `/books`, `/books?page=2`, `/books?page=3`, `/books/36?page=2&q=Bookstore`, `/login`, `/register`: HTTP 200.
+- `/books/999999`: HTTP 404; `/books?min_price=2&max_price=1`: HTTP 400; kết quả rỗng `/books?min_price=999999999`: HTTP 200.
+- `/static/cover.svg`, `/static/forms.js`, `/static/style.css`: HTTP 200.
+
+Công cụ trình duyệt đã được thử nhưng kernel thoát với lỗi `windows sandbox failed: orchestrator_helper_exit_nonzero`. **Chưa kiểm tra trực quan bằng trình duyệt** trên desktop/tablet/điện thoại; chưa xác minh giao diện thực tế, tải CDN/ảnh ngoài, fallback ảnh hoặc validation HTML/JavaScript bằng thao tác trình duyệt. Mã có viewport, lưới Bootstrap 1/2/3/4 cột và CSS cho ảnh/văn bản dài, nhưng đó không phải bằng chứng QA giao diện. Các bước kiểm tra thủ công có trong [DEMO.md](DEMO.md).
+
+### Phép đo catalogue có 36 sách
+
+Chạy `scripts/measure_catalog.py`: SQLite mới riêng, 36 sách, 12 thẻ/trang, người chưa đăng nhập; Flask test client, một tiến trình, 100 GET tuần tự `/books`, không tải mạng/tài nguyên ngoài. Môi trường Windows 11 `10.0.26200`, Python 3.12.10, Flask 3.1.3, SQLite 3.49.1, bộ xử lý báo `Intel64 Family 6 Model 191 Stepping 2, GenuineIntel`.
+
+| Phép đo | Thời gian |
+| --- | ---: |
+| Yêu cầu đầu, có biên dịch template | 17,245 ms |
+| Trung vị 100 yêu cầu tiếp | 1,260 ms |
+| p95 | 1,530 ms |
+| Lớn nhất trong 100 yêu cầu | 1,951 ms |
+
+Đây là thời gian xử lý/kết xuất server, dưới mốc 2.000 ms trong môi trường đo. **Chưa đủ để xác nhận yêu cầu tải trang đầu cuối dưới 2 giây**, vì chưa đo mạng, Bootstrap CDN, ảnh ngoài, trình duyệt hoặc tải đồng thời. Có thể chạy lại script theo README; đầu ra JSON lưu cục bộ trong `.test-tmp/benchmark-*/result.json`.
+
+Không push, tạo tag hoặc deploy Release 1.0. Các phần dưới đây là lịch sử kiểm tra F1, không phải kết quả hiện tại.
+
+## Lần kiểm tra lại theo yêu cầu (lịch sử F1)
 
 ### Chạy với thư mục tạm riêng sau lỗi quyền truy cập
 

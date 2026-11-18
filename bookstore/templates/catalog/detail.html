@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}{{ book.title }} · Team 1 Bookstore{% endblock %}
+{% block content %}
+<a class="btn btn-outline-dark mb-4" id="back-to-books" href="{{ back }}">← Back to books</a>
+<article class="row g-4 g-md-5">
+  <div class="col-12"><p class="mb-0">ISBN-13: <span id="book-isbn">{{ book.isbn }}</span>{% if book.isbn_is_demo %} <span class="badge text-bg-warning">Demo code — not a verified edition ISBN</span>{% endif %}</p></div>
+  <div class="col-md-4"><img class="book-cover detail-cover rounded-4" src="{{ book.cover_url or url_for('static', filename='cover.svg') }}" data-cover-fallback="{{ url_for('static', filename='cover.svg') }}" alt="Cover of {{ book.title }}" width="360" height="480" referrerpolicy="no-referrer"></div>
+  <div class="col-md-8"><p class="eyebrow">{{ book.genre }}</p><h1 class="book-title">{{ book.title }}</h1><p class="lead">By {{ book.author }}</p><p class="h3 my-4">{{ book.price_cents|money }}</p><p>{% if book.stock %}In stock: {{ book.stock }}{% else %}Out of stock{% endif %}</p><h2 class="h4 mt-4">About this book</h2><p class="book-description">{{ book.description or 'No description available.' }}</p></div>
+</article>
+{% endblock %}
