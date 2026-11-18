@@ -11,9 +11,11 @@
 <header class="border-bottom bg-white">
   <nav class="container py-3 d-flex flex-wrap align-items-center gap-3" aria-label="Main navigation">
     <a class="brand me-auto" href="{{ url_for('home') }}">Team 1 <span>Bookstore</span></a>
+    <a href="{{ url_for('catalog.books') }}">Books</a>
     {% if g.user %}
       <a href="{{ url_for('auth.account') }}">My account</a>
       {% if g.user['role'] == 'Admin' %}<a href="{{ url_for('admin.accounts') }}">Manage accounts</a>{% endif %}
+      {% if g.user['role'] == 'Admin' %}<a href="{{ url_for('catalog.manage_books') }}">Manage books</a>{% endif %}
       <form method="post" action="{{ url_for('auth.logout') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-outline-dark btn-sm">Sign out</button>

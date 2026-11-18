@@ -1,2 +1,2 @@
 {% extends 'base.html' %}
-{% block content %}<section class="card p-4"><h1 class="h2">{{ title }}</h1><p>{{ message }}</p><a href="{{ url_for('home') }}">Back to home</a></section>{% endblock %}
+{% block content %}<section class="card p-4"><h1 class="h2">{{ title }}</h1><p>{{ message }}</p><a href="{{ url_for('catalog.books') }}">Browse books</a><a class="mt-2" href="{{ url_for('home') }}">Back to home</a></section>{% endblock %}

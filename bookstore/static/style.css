@@ -10,5 +10,11 @@ h1, h2 { font-family: Georgia, serif; }
 .btn-primary:hover, .btn-primary:focus { background: #193d30; border-color: #193d30; }
 .card { border: 1px solid #e2e2d8; border-radius: 1rem; box-shadow: 0 4px 18px #233e3608; }
 .form-card { max-width: 540px; }
+.book-cover { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; background: #e6edde; }
+.detail-cover { max-width: 360px; margin-inline: auto; }
+.book-title, .book-description { overflow-wrap: anywhere; }
+.book-description { white-space: pre-wrap; }
+.page-link { color: #265e4d; }
+.active > .page-link { background: #285b48; border-color: #285b48; }
 .form-control:focus, .form-select:focus { border-color: #52816a; box-shadow: 0 0 0 .2rem #52816a33; }
 @media (max-width: 575px) { .brand { width: 100%; } .display-4 { font-size: 2.5rem; } }
